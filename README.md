@@ -4,7 +4,8 @@ project is a command line too for code template of a new golang project.
 
 ## installation & Updates
 ===
-> Begin by installing `project` by `get get` command
+> Begin by installing `project` by `get get` command:
+
 ```bash
 go get github.com/carbin-gun/project
 ```
