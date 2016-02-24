@@ -1,6 +1,6 @@
 # project
 ===
-project is a command line too for code template of a new golang project.
+project is a command line tool of go language for code generation .
 
 ## installation & Updates
 ===
