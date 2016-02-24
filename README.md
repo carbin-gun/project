@@ -2,16 +2,14 @@
 ===
 project is a command line too for code template of a new golang project.
 
-## installation
+## installation & Updates
 ===
-Begin by installing `project` by `get get` command
-
+> Begin by installing `project` by `get get` command
 ```bash
 go get github.com/carbin-gun/project
 ```
-# Update
-===
 > If you already have `project` installed, updating `project` is simple:
+
 ```bash
 go get -u github.com/carbin-gun/project
 ```
