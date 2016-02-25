@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/build"
+	"log"
 	"os/exec"
 	"path/filepath"
 
@@ -16,8 +17,8 @@ import (
 
 var New = cli.Command{
 	Name:      "new",
-	Usage:     "create a new app framework according to the template.",
 	ShortName: "N",
+	Usage:     "create a new app framework according to the template.",
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "template,t",
@@ -63,10 +64,9 @@ func NewApp(ctx *cli.Context) {
 	//
 	//// copy files to new app directory
 	copyNewAppFiles()
-	//
-	//// goodbye world
-	fmt.Fprintln(os.Stdout, "Your application is ready:\n  ", appPath)
-	fmt.Fprintln(os.Stdout, "\nYou can run it with:\n   project run", importPath)
+	////// well done for the new
+	log.Printf("Your application is ready:\n  ", appPath)
+	log.Printf("\nYou can run it with:\n   project run", importPath)
 }
 
 // lookup and set Go related variables

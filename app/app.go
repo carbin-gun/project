@@ -20,6 +20,7 @@ func New() *cli.App {
 	//app commands
 	app.Commands = []cli.Command{
 		cmd.New,
+		cmd.Database,
 	}
 	return app
 }

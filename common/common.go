@@ -21,12 +21,31 @@ func Errorf(format string, args ...interface{}) {
 	panic(LoggedError{}) // Panic instead of os.Exit so that deferred will run.
 }
 
+func Error(format string) {
+	fmt.Fprintf(os.Stderr, format)
+	panic(LoggedError{})
+}
+
 func PanicOnError(err error, msg string) {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Abort: %s: %s\n", msg, err)
 		panic(LoggedError{err})
 	}
 
+}
+func TrueErrorf(charge bool, format string, args ...interface{}) {
+	if charge {
+		if len(args) == 0 {
+			Errorf(format)
+		} else {
+			Errorf(format, args)
+		}
+
+	}
+}
+
+func Empty(field string) bool {
+	return strings.TrimSpace(field) == ""
 }
 
 func CopyDir(destDir, srcDir string, data map[string]interface{}) error {
