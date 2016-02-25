@@ -17,6 +17,7 @@
       <root url="file://$USER_HOME$/GoLib/src/github.com" />
       <root url="file://$USER_HOME$/GoLib/src/abc" />
       <root url="file://$PROJECT_DIR$/../.." />
+      <root url="file://$USER_HOME$/GoLib/src/my-copies" />
       <root url="file://$PROJECT_DIR$/../../../jsonp" />
       <root url="file://$PROJECT_DIR$/../../../NetEaseReaderServer" />
       <root url="file://$PROJECT_DIR$/../../../meican-admin" />
