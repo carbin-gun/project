@@ -7,7 +7,6 @@ type ModelMeta struct {
 	PrimaryFields PrimaryFields
 	Fields        []ModelField
 	Uniques       []ModelField
-	config        CodeConfig
 }
 type PrimaryFields []*ModelField
 type ModelField struct {
@@ -22,3 +21,6 @@ type ModelField struct {
 	Extra           string
 	Comment         string
 }
+
+type Table []Column
+type Schema map[string]Table

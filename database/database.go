@@ -1,29 +1,12 @@
 package database
 
-import (
-	"database/sql"
-)
-
-type Column struct {
-	Schema       string
-	TableName    string
-	ColumnName   string
-	DefaultValue string
-	DataType     string
-	ColumnType   string
-	ColumnKey    string
-	Extra        string
-	Comment      string
-}
-
-type Table []Column
-type Schema map[string]Table
+import "database/sql"
 
 var SupportedDrivers map[string]Driver
 
 type Driver interface {
 	Load(dsnString string, schema string, tableNames string) (Schema, error)
-	GenerateCode(schema Schema)
+	GenerateCode(dbName string, schema Schema, templatePath string, targetDir string)
 }
 
 func init() {

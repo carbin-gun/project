@@ -10,20 +10,28 @@ type CodeGenResult struct {
 	Error error
 }
 
-func GenByDefault(dbName string, schema Schema, template *template.Template, targetDir string) {
+func GenByDefault(dbName string, schema Schema, templatePath string, targetDir string) {
+
 	CreateIfNotExist(targetDir)
 	genResults := make(chan CodeGenResult)
-
+	template := parseTemplate(templatePath)
 	for tableName, columns := range schema {
 		//Concurrently generate codes for tables.
 		go func(tableName string, tableColumns Table) {
 			err := generateModel(dbName, tableName, tableColumns, template)
-			genResult := CodeGenResult{Name: tableName, err}
+			genResult := CodeGenResult{Name: tableName, Error: err}
 			genResults <- genResult
 		}(tableName, columns)
 
 	}
 
+}
+
+func parseTemplate(path string) *template.Template {
+	if path == "" {
+		return nil
+	}
+	return template.Must(template.ParseFiles(path))
 }
 
 //generateModel will return a go filed named by table name,the content is go model struct and database access code.

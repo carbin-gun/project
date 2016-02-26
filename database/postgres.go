@@ -9,8 +9,6 @@ import (
 
 	"fmt"
 
-	"text/template"
-
 	"github.com/carbin-gun/project/common"
 	_ "github.com/lib/pq"
 )
@@ -60,14 +58,9 @@ func (postgresDriver PostgresDriver) Load(dsnString string, schema string, table
 	return ret, nil
 }
 
-//GenerateCode generate the codes accoring to the instance of schema
-func (postgresDriver PostgresDriver) GenerateCode(schema Schema, template *template.Template) {
-	if template == nil {
-		//generate from default template.
-
-	} else {
-		//generate from user defined template.
-	}
+//GenerateCode generate the codes according to the instance of schema
+func (postgresDriver PostgresDriver) GenerateCode(dbName string, schema Schema, templatePath string, targetDir string) {
+	GenByDefault(dbName, schema, templatePath, targetDir)
 }
 
 func (postgresDriver PostgresDriver) Query(db *sql.DB, schema, tableNames string) Schema {
@@ -113,8 +106,6 @@ func setUpColumnKey(primaries StringSet, tableName, columnName string) Index {
 	}
 }
 
-func buildSchema()
-
 /**
 convert from database type to golang type
 */
@@ -148,7 +139,7 @@ func (postgresDriver PostgresDriver) QueryColumns(db *sql.DB, schema, tableNames
 	}
 	defer rows.Close()
 	common.PanicOnError(err, "[postgres driver]QueryColumns error")
-	tableColumnsSlice := []TableConstraints{}
+	tableColumnsSlice := []TableColumns{}
 	EachRow(rows, strings.Split(TABLE_COLUMNS_COLUMNS, ","), func(columns []string, rb []sql.RawBytes) bool {
 		oneRow := ToTableColumns(columns, rb)
 		tableColumnsSlice = append(tableColumnsSlice, oneRow)
@@ -174,7 +165,7 @@ func (postgresDriver PostgresDriver) QueryPrimaryKeys(db *sql.DB, schema, tableN
 	EachRow(rows, strings.Split(PRIMARY_KEYS_COLUMNS, ","), func(columns []string, rb []sql.RawBytes) bool {
 		oneRow := ToTableConstraints(columns, rb)
 		tableConstraintsSlice = append(tableConstraintsSlice, oneRow)
-		primaryKeys[buildPrimaryKey(oneRow.TableName, oneRow.ColumnName)]
+		primaryKeys[buildPrimaryKey(oneRow.TableName, oneRow.ColumnName)] = struct{}{}
 		return true
 	})
 	return tableConstraintsSlice, primaryKeys

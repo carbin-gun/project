@@ -68,10 +68,9 @@ func generateByDatabase(ctx *cli.Context) {
 	}
 	schemaInfo, err := specifyDriver.Load(db, schema, tables)
 	common.PanicOnError(err, "[database driver]Load error")
-	specifyDriver.GenerateCode(schemaInfo)
+	specifyDriver.GenerateCode(db, schemaInfo, template, dir)
 
 }
-
 
 func paramsCheck(ctx *cli.Context) {
 	db = ctx.String("db")
