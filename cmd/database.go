@@ -62,13 +62,16 @@ var Database = cli.Command{
 
 func generateByDatabase(ctx *cli.Context) {
 	paramsCheck(ctx)
-	if specifyDriver, ok := database.SupportedDrivers[strings.ToLower(driver)]; !ok {
+	specifyDriver, ok := database.SupportedDrivers[strings.ToLower(driver)]
+	if !ok {
 		common.Errorf("Not support driver,currently support [%s]", strings.Join(DATABASE_SUPPORTED, ","))
-	} else {
-		specifyDriver.Load(db, schema, tables)
 	}
+	schemaInfo, err := specifyDriver.Load(db, schema, tables)
+	common.PanicOnError(err, "[database driver]Load error")
+	specifyDriver.GenerateCode(schemaInfo)
 
 }
+
 
 func paramsCheck(ctx *cli.Context) {
 	db = ctx.String("db")

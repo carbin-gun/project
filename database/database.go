@@ -23,6 +23,7 @@ var SupportedDrivers map[string]Driver
 
 type Driver interface {
 	Load(dsnString string, schema string, tableNames string) (Schema, error)
+	GenerateCode(schema Schema)
 }
 
 func init() {
