@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"os"
+	"path"
+
 	"github.com/carbin-gun/project/common"
 	"github.com/carbin-gun/project/database"
 	"github.com/codegangsta/cli"
@@ -84,7 +87,11 @@ func paramsCheck(ctx *cli.Context) {
 	tables = ctx.String("tables")
 	common.TrueErrorf(common.Empty(tables), "Please provide the tables you want to generate codes from.if all ,provide *,more than one tables,use comma as delimiter")
 	template = ctx.String("template")
-	common.TrueErrorf(common.Empty(template), "Please provide the code template")
+	if template != "" {
+		if file, err := os.Stat(path.Join(dir, template)); err != nil || !file.IsDir() {
+			common.PanicOnError(err, "Please provide a existing template file.")
+		}
+	}
 	//fail fast,if it's a not supported driver
 	if _, ok := database.SupportedDrivers[strings.ToLower(driver)]; !ok {
 		common.Errorf("Not support driver,currently support [%s]", strings.Join(DATABASE_SUPPORTED, ","))

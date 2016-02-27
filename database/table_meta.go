@@ -70,10 +70,57 @@ type TableColumns struct {
 	IsUpdatable            string `json:"is_updatable"`
 }
 
-type Index struct {
-	Type     string
-	Generate func()
+type IndexInfo interface {
+	IsIndex() bool
+	IsUniqueIndex() bool
+	IsPrimaryKey() bool
 }
+type PrimaryIndex struct{}
+type UniqueIndex struct{}
+type OrdinaryIndex struct{}
+type NonIndex struct{}
+
+func (p PrimaryIndex) IsIndex() bool {
+	return true
+}
+func (p PrimaryIndex) IsUniqueIndex() bool {
+	return true
+}
+func (p PrimaryIndex) IsPrimaryKey() bool {
+	return true
+}
+
+func (p UniqueIndex) IsPrimaryKey() bool {
+	return false
+}
+func (p UniqueIndex) IxUniqueIndex() bool {
+	return true
+}
+func (p UniqueIndex) IsIndex() bool {
+	return true
+}
+
+func (p OrdinaryIndex) IsPrimaryKey() bool {
+	return false
+}
+func (p OrdinaryIndex) IxUniqueIndex() bool {
+	return false
+}
+func (p OrdinaryIndex) IsIndex() bool {
+	return true
+}
+func (p NonIndex) IsPrimaryKey() bool {
+	return false
+}
+func (p NonIndex) IsUniqueIndex() bool {
+	return false
+}
+func (p NonIndex) IsIndex() bool {
+	return false
+}
+
+type Table []Column
+type Schema map[string]Table
 
 /**
 universally abstracted to represent a column.
@@ -85,7 +132,7 @@ type Column struct {
 	DefaultValue string
 	DataType     string
 	ColumnType   string
-	ColumnKey    Index
+	ColumnKey    IndexInfo
 	Extra        string
 	Comment      string
 }

@@ -3,7 +3,6 @@ package database
 import (
 	"database/sql"
 	"log"
-	"my-copies/gmq"
 
 	"strings"
 
@@ -21,8 +20,8 @@ const (
 	//PRIMARY_SQL_IN_TABLES     = `select ` + TABLE_CONSTRAINTS_COLUMNS + ` from information_schema.table_constraints where table_schema = $1 and table_name in $2 and constraint_type='PRIMARY KEY' `
 	COLUMNS_SQL                = `select ` + TABLE_COLUMNS_COLUMNS + ` from information_schema.columns where table_schema=$1 order by ordinal_position`
 	COLUMNS_SQL_IN_TABLES      = `select ` + TABLE_COLUMNS_COLUMNS + ` from information_schema.columns where table_schema=$1 and table_name in $2 order by ordinal_position`
-	PRIMARY_KEYS_SQL           = `select ` + PRIMARY_KEYS_COLUMNS + ` from information_schema.table_constraints a inner join information_schema.key_column_usage b on a.constraint_name = b.constraint_name and a.table_schema=b.table_schema and a.table_name=b.table_name and a.table_schema='$1' and a.constraint_type='PRIMARY KEY' `
-	PRIMARY_KEYS_SQL_IN_TABLES = `select ` + PRIMARY_KEYS_COLUMNS + ` from information_schema.table_constraints a inner join information_schema.key_column_usage b on a.constraint_name = b.constraint_name and a.table_schema=b.table_schema and a.table_name=b.table_name and a.table_schema='$1'  and table_name in $2 and a.constraint_type='PRIMARY KEY' `
+	PRIMARY_KEYS_SQL           = `select ` + PRIMARY_KEYS_COLUMNS + ` from information_schema.table_constraints a inner join information_schema.key_column_usage b on a.constraint_name = b.constraint_name and a.table_schema=b.table_schema and a.table_name=b.table_name and a.table_schema=$1 and a.constraint_type='PRIMARY KEY' `
+	PRIMARY_KEYS_SQL_IN_TABLES = `select ` + PRIMARY_KEYS_COLUMNS + ` from information_schema.table_constraints a inner join information_schema.key_column_usage b on a.constraint_name = b.constraint_name and a.table_schema=b.table_schema and a.table_name=b.table_name and a.table_schema=$1  and table_name in $2 and a.constraint_type='PRIMARY KEY' `
 )
 
 type StringSet map[string]struct{}
@@ -67,7 +66,7 @@ func (postgresDriver PostgresDriver) Query(db *sql.DB, schema, tableNames string
 	ret := make(Schema)
 	tableConstraints, primaryKeys := postgresDriver.QueryPrimaryKeys(db, schema, tableNames)
 	for _, constraint := range tableConstraints {
-		fmt.Println(constraint.TableName)
+		log.Printf("queried table [%s.%s] in schema [%s]\n", constraint.TableCatalog, constraint.TableName, constraint.ConstraintSchema)
 	}
 	tableColumns := postgresDriver.QueryColumns(db, schema, tableNames)
 	for _, item := range tableColumns {
@@ -91,17 +90,13 @@ func (postgresDriver PostgresDriver) Query(db *sql.DB, schema, tableNames string
 
 }
 
-func setUpColumnKey(primaries StringSet, tableName, columnName string) Index {
+func setUpColumnKey(primaries StringSet, tableName, columnName string) IndexInfo {
 	pk := buildPrimaryKey(tableName, columnName)
 	if _, ok := primaries[pk]; ok {
-		index := Index{Type: "PRIMARY KEY", Generate: func() {
-			//TODO generate by primary keys
-		}}
+		index := PrimaryIndex{}
 		return index
 	} else {
-		index := Index{Type: "NONE", Generate: func() {
-
-		}}
+		index := NonIndex{}
 		return index
 	}
 }
@@ -152,7 +147,7 @@ func (postgresDriver PostgresDriver) QueryColumns(db *sql.DB, schema, tableNames
 func (postgresDriver PostgresDriver) QueryPrimaryKeys(db *sql.DB, schema, tableNames string) ([]TableConstraints, StringSet) {
 	var rows *sql.Rows
 	var err error
-	if tableNames != "*" {
+	if tableNames != `*` {
 		rows, err = db.Query(PRIMARY_KEYS_SQL_IN_TABLES, schema, tableNames)
 	} else {
 		rows, err = db.Query(PRIMARY_KEYS_SQL, schema)
@@ -176,95 +171,96 @@ func ToTableColumns(columns []string, rb []sql.RawBytes) TableColumns {
 	obj := TableColumns{}
 	if len(columns) == len(rb) {
 		for i := range columns {
-			switch columns[i] {
+			columnName := strings.TrimSpace(columns[i])
+			switch columnName {
 			case "table_catalog":
-				obj.TableCatalog = gmq.AsString(rb[i])
+				obj.TableCatalog = AsString(rb[i])
 			case "table_schema":
-				obj.TableSchema = gmq.AsString(rb[i])
+				obj.TableSchema = AsString(rb[i])
 			case "table_name":
-				obj.TableName = gmq.AsString(rb[i])
+				obj.TableName = AsString(rb[i])
 			case "column_name":
-				obj.ColumnName = gmq.AsString(rb[i])
+				obj.ColumnName = AsString(rb[i])
 			case "ordinal_position":
-				obj.OrdinalPosition = gmq.AsInt(rb[i])
+				obj.OrdinalPosition = AsInt(rb[i])
 			case "column_default":
-				obj.ColumnDefault = gmq.AsString(rb[i])
+				obj.ColumnDefault = AsString(rb[i])
 			case "is_nullable":
-				obj.IsNullable = gmq.AsString(rb[i])
+				obj.IsNullable = AsString(rb[i])
 			case "data_type":
-				obj.DataType = gmq.AsString(rb[i])
+				obj.DataType = AsString(rb[i])
 			case "character_maximum_length":
-				obj.CharacterMaximumLength = gmq.AsInt(rb[i])
+				obj.CharacterMaximumLength = AsInt(rb[i])
 			case "character_octet_length":
-				obj.CharacterOctetLength = gmq.AsInt(rb[i])
+				obj.CharacterOctetLength = AsInt(rb[i])
 			case "numeric_precision":
-				obj.NumericPrecision = gmq.AsInt(rb[i])
+				obj.NumericPrecision = AsInt(rb[i])
 			case "numeric_precision_radix":
-				obj.NumericPrecisionRadix = gmq.AsInt(rb[i])
+				obj.NumericPrecisionRadix = AsInt(rb[i])
 			case "numeric_scale":
-				obj.NumericScale = gmq.AsInt(rb[i])
+				obj.NumericScale = AsInt(rb[i])
 			case "datetime_precision":
-				obj.DatetimePrecision = gmq.AsInt(rb[i])
+				obj.DatetimePrecision = AsInt(rb[i])
 			case "interval_type":
-				obj.IntervalType = gmq.AsString(rb[i])
+				obj.IntervalType = AsString(rb[i])
 			case "interval_precision":
-				obj.IntervalPrecision = gmq.AsInt(rb[i])
+				obj.IntervalPrecision = AsInt(rb[i])
 			case "character_set_catalog":
-				obj.CharacterSetCatalog = gmq.AsString(rb[i])
+				obj.CharacterSetCatalog = AsString(rb[i])
 			case "character_set_schema":
-				obj.CharacterSetSchema = gmq.AsString(rb[i])
+				obj.CharacterSetSchema = AsString(rb[i])
 			case "character_set_name":
-				obj.CharacterSetName = gmq.AsString(rb[i])
+				obj.CharacterSetName = AsString(rb[i])
 			case "collation_catalog":
-				obj.CollationCatalog = gmq.AsString(rb[i])
+				obj.CollationCatalog = AsString(rb[i])
 			case "collation_schema":
-				obj.CollationSchema = gmq.AsString(rb[i])
+				obj.CollationSchema = AsString(rb[i])
 			case "collation_name":
-				obj.CollationName = gmq.AsString(rb[i])
+				obj.CollationName = AsString(rb[i])
 			case "domain_catalog":
-				obj.DomainCatalog = gmq.AsString(rb[i])
+				obj.DomainCatalog = AsString(rb[i])
 			case "domain_schema":
-				obj.DomainSchema = gmq.AsString(rb[i])
+				obj.DomainSchema = AsString(rb[i])
 			case "domain_name":
-				obj.DomainName = gmq.AsString(rb[i])
+				obj.DomainName = AsString(rb[i])
 			case "udt_catalog":
-				obj.UdtCatalog = gmq.AsString(rb[i])
+				obj.UdtCatalog = AsString(rb[i])
 			case "udt_schema":
-				obj.UdtSchema = gmq.AsString(rb[i])
+				obj.UdtSchema = AsString(rb[i])
 			case "udt_name":
-				obj.UdtName = gmq.AsString(rb[i])
+				obj.UdtName = AsString(rb[i])
 			case "scope_catalog":
-				obj.ScopeCatalog = gmq.AsString(rb[i])
+				obj.ScopeCatalog = AsString(rb[i])
 			case "scope_schema":
-				obj.ScopeSchema = gmq.AsString(rb[i])
+				obj.ScopeSchema = AsString(rb[i])
 			case "scope_name":
-				obj.ScopeName = gmq.AsString(rb[i])
+				obj.ScopeName = AsString(rb[i])
 			case "maximum_cardinality":
-				obj.MaximumCardinality = gmq.AsInt(rb[i])
+				obj.MaximumCardinality = AsInt(rb[i])
 			case "dtd_identifier":
-				obj.DtdIdentifier = gmq.AsString(rb[i])
+				obj.DtdIdentifier = AsString(rb[i])
 			case "is_self_referencing":
-				obj.IsSelfReferencing = gmq.AsString(rb[i])
+				obj.IsSelfReferencing = AsString(rb[i])
 			case "is_identity":
-				obj.IsIdentity = gmq.AsString(rb[i])
+				obj.IsIdentity = AsString(rb[i])
 			case "identity_generation":
-				obj.IdentityGeneration = gmq.AsString(rb[i])
+				obj.IdentityGeneration = AsString(rb[i])
 			case "identity_start":
-				obj.IdentityStart = gmq.AsString(rb[i])
+				obj.IdentityStart = AsString(rb[i])
 			case "identity_increment":
-				obj.IdentityIncrement = gmq.AsString(rb[i])
+				obj.IdentityIncrement = AsString(rb[i])
 			case "identity_maximum":
-				obj.IdentityMaximum = gmq.AsString(rb[i])
+				obj.IdentityMaximum = AsString(rb[i])
 			case "identity_minimum":
-				obj.IdentityMinimum = gmq.AsString(rb[i])
+				obj.IdentityMinimum = AsString(rb[i])
 			case "identity_cycle":
-				obj.IdentityCycle = gmq.AsString(rb[i])
+				obj.IdentityCycle = AsString(rb[i])
 			case "is_generated":
-				obj.IsGenerated = gmq.AsString(rb[i])
+				obj.IsGenerated = AsString(rb[i])
 			case "generation_expression":
-				obj.GenerationExpression = gmq.AsString(rb[i])
+				obj.GenerationExpression = AsString(rb[i])
 			case "is_updatable":
-				obj.IsUpdatable = gmq.AsString(rb[i])
+				obj.IsUpdatable = AsString(rb[i])
 			}
 		}
 	}
@@ -276,27 +272,30 @@ func ToTableConstraints(columns []string, rb []sql.RawBytes) TableConstraints {
 	obj := TableConstraints{}
 	if len(columns) == len(rb) {
 		for i := range columns {
-			switch columns[i] {
+			prefixLen := 2 //there will be "a." or "b." as the prefix,so we should remove it.
+			columnName := strings.TrimSpace(columns[i])[prefixLen:]
+			loopVal := AsString(rb[i])
+			switch columnName {
 			case "constraint_catalog":
-				obj.ConstraintCatalog = AsString(rb[i])
+				obj.ConstraintCatalog = loopVal
 			case "constraint_schema":
-				obj.ConstraintSchema = AsString(rb[i])
+				obj.ConstraintSchema = loopVal
 			case "constraint_name":
-				obj.ConstraintName = AsString(rb[i])
+				obj.ConstraintName = loopVal
 			case "table_catalog":
-				obj.TableCatalog = AsString(rb[i])
+				obj.TableCatalog = loopVal
 			case "table_schema":
-				obj.TableSchema = AsString(rb[i])
+				obj.TableSchema = loopVal
 			case "table_name":
-				obj.TableName = AsString(rb[i])
+				obj.TableName = loopVal
 			case "constraint_type":
-				obj.ConstraintType = AsString(rb[i])
+				obj.ConstraintType = loopVal
 			case "is_deferrable":
-				obj.IsDeferrable = AsString(rb[i])
+				obj.IsDeferrable = loopVal
 			case "initially_deferred":
-				obj.InitiallyDeferred = AsString(rb[i])
+				obj.InitiallyDeferred = loopVal
 			case "column_name":
-				obj.ColumnName = AsString(rb[i])
+				obj.ColumnName = loopVal
 
 			}
 		}

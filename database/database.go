@@ -1,6 +1,9 @@
 package database
 
-import "database/sql"
+import (
+	"database/sql"
+	"strconv"
+)
 
 var SupportedDrivers map[string]Driver
 
@@ -21,4 +24,17 @@ func AsString(rb sql.RawBytes) string {
 		return string(rb)
 	}
 	return ""
+}
+
+func AsInt64(rb sql.RawBytes) int64 {
+	if len(rb) > 0 {
+		if n, err := strconv.ParseInt(string(rb), 10, 64); err == nil {
+			return n
+		}
+	}
+	return 0
+}
+
+func AsInt(rb sql.RawBytes) int {
+	return int(AsInt64(rb))
 }
