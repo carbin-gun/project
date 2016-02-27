@@ -31,7 +31,7 @@ func GenByDefault(dbName string, schema Schema, templatePath string, targetDir s
 		if result.Error != nil {
 			log.Printf("Error on CodeGen for table [%s], %s", result.TableName, result.Error)
 		} else {
-			log.Printf("Successful CodeGen for table [%s] ,model file [%s/%s.go]", result.TableName, targetDir, result.TableName)
+			log.Printf("Done for table [%s] ,model file [%s/%s.go]", result.TableName, targetDir, result.TableName)
 		}
 	}
 	close(genResults)
