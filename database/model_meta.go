@@ -189,6 +189,15 @@ func (m ModelMeta) GenQueryApi(w *bufio.Writer, tmpl *template.Template) error {
 func (m ModelMeta) GenManagedObjApi(w *bufio.Writer, tmpl *template.Template) error {
 	return m.getTemplate(tmpl, "managed_api", ManageAPITemplate).Execute(w, m)
 }
+
+func (m ModelMeta) ColumnNames() string {
+
+	return GetColumnNamesDelimiterByComma(m)
+}
+func (m ModelMeta) FieldNames(receiverMarker string) string {
+	return GetFieldNamesDelimiterByComma(m, receiverMarker)
+}
+
 func (f ModelField) ConverterFuncName() string {
 	convertors := map[string]string{
 		"int64":     "AsInt64",

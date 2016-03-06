@@ -72,7 +72,7 @@ func generateModel(targetDir, dbName, tableName string, tableColumns Table, temp
 			Name:            ToCapitalCase(col.ColumnName),
 			ColumnName:      col.ColumnName,
 			Type:            col.DataType,
-			JsonMeta:        fmt.Sprintf("`json:\"%s\"`", col.ColumnName),
+			JsonMeta:        fmt.Sprintf("`json:\"%s\" db:\"%s\"`", col.ColumnName, col.ColumnName),
 			IsPrimaryKey:    col.ColumnKey.IsPrimaryKey(),
 			IsUniqueKey:     col.ColumnKey.IsUniqueIndex(),
 			IsAutoIncrement: strings.ToUpper(col.Extra) == "AUTO_INCREMENT",
@@ -93,6 +93,8 @@ func generateModel(targetDir, dbName, tableName string, tableColumns Table, temp
 
 		modelMeta.Fields[i] = field
 	}
+
+	log.Printf("ModelMeta:%#v\n", modelMeta)
 	if err := modelMeta.GenHeader(w, template, needTime); err != nil {
 		return fmt.Errorf("[%s] Fail to gen model header, %s", tableName, err)
 	}

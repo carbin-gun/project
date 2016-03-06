@@ -12,7 +12,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"strings"
-	"github.com/mijia/modelq/gmq"
+	"github.com/jmoiron/sqlx"
 	"database/sql"
 	{{if .ImportTime}}"time"{{end}}
 )
@@ -33,6 +33,30 @@ func (obj {{.Name}}) String() string {
 	} else {
 		return string(data)
 	}
+}
+
+func  QueryById(id int64) (*{{.Name}},error){
+
+ 	ret:=&{{.Name}}{}
+ 	err:=db.Get(ret,"select * from {{.TableName}} where id=$1",id)
+ 	return ret,err
+}
+
+func MarkRemoved(id int64) error{
+  result,err:=db.Execute("update {{.TableName}} set removed=true where id=$1",id)
+  if err!=nil{
+    return err
+  }
+  if(result.RowsAffected<1){
+  	return errors.New("no record in table[{{.TableName}}] id="+id)
+  }
+  return nil
+}
+
+func Insert{{.Name}}(obj {{.Name}}) error(){
+
+  db.Exec("insert into {{.TableName}}({{.ColumnNames}}) values({{ .FieldNames "obj"}})",obj)
+  return nil
 }
 
 func (obj {{.Name}}) Get(dbtx gmq.DbTx) ({{.Name}}, error) {
@@ -289,9 +313,10 @@ var (
 )
 
 func init() {
-	HeaderTemplate = template.Must(template.New("header").Parse(header))
-	StructTemplate = template.Must(template.New("modelStruct").Parse(modelStruct))
-	ObjectAPITemplate = template.Must(template.New("objApi").Parse(objApi))
-	QueryAPITemplate = template.Must(template.New("queryApi").Parse(queryApi))
-	ManageAPITemplate = template.Must(template.New("managedApi").Parse(managedApi))
+	funcMap := template.FuncMap{"ColumnNames": GetColumnNamesDelimiterByComma, "FieldNames": GetFieldNamesDelimiterByComma}
+	HeaderTemplate = template.Must(template.New("header").Parse(header)).Funcs(funcMap)
+	StructTemplate = template.Must(template.New("modelStruct").Parse(modelStruct)).Funcs(funcMap)
+	ObjectAPITemplate = template.Must(template.New("objApi").Parse(objApi)).Funcs(funcMap)
+	QueryAPITemplate = template.Must(template.New("queryApi").Parse(queryApi)).Funcs(funcMap)
+	ManageAPITemplate = template.Must(template.New("managedApi").Parse(managedApi)).Funcs(funcMap)
 }

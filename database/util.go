@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 )
 
 func CreateModelFile(dir, tableName string) (*os.File, error) {
@@ -51,4 +52,20 @@ func ToCapitalCase(name string) string {
 		}
 	}
 	return string(data[:endPos])
+}
+
+func GetColumnNamesDelimiterByComma(modelMeta ModelMeta) string {
+	ret := []string{}
+	for _, item := range modelMeta.Fields {
+		ret = append(ret, item.ColumnName)
+	}
+	return strings.Join(ret, ",")
+}
+
+func GetFieldNamesDelimiterByComma(modelMeta ModelMeta, receiverMarker string) string {
+	ret := []string{}
+	for _, item := range modelMeta.Fields {
+		ret = append(ret, receiverMarker+"."+item.Name)
+	}
+	return strings.Join(ret, ",")
 }
