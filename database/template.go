@@ -12,7 +12,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"strings"
-	"github.com/jmoiron/sqlx"
+	_ "github.com/jmoiron/sqlx"
 	"database/sql"
 	{{if .ImportTime}}"time"{{end}}
 )
